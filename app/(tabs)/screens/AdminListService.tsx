@@ -1,55 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { FIRESTORE_DB } from '../firebaseConfig'; // Cấu hình Firebase
-import { collection, getDocs } from 'firebase/firestore'; // Firebase Firestore SDK
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, TextInput, Button } from 'react-native';
+import { FIRESTORE_DB } from '../firebaseConfig'; // Firebase configuration
+import { collection, getDocs, addDoc } from 'firebase/firestore'; // Firebase Firestore SDK
 
-// Định nghĩa kiểu dữ liệu Service
+// Define the Service data type
 type Service = {
   id: string;
   Creator: string;
-  FinalUpdate: string;
   Price: number;
   ServiceName: string;
-  time: string;
 };
 
 const AdminListScreen = ({ navigation }: any) => {
-  const [services, setServices] = useState<Service[]>([]); // Dữ liệu dịch vụ
-  const [loading, setLoading] = useState(true); // Trạng thái tải dữ liệu
+  const [services, setServices] = useState<Service[]>([]); // Services data
+  const [loading, setLoading] = useState(true); // Data loading state
+  const [isModalVisible, setModalVisible] = useState(false); // Modal visibility state
+  const [creator, setCreator] = useState(''); // Creator's name
+  const [price, setPrice] = useState(''); // Service price
+  const [serviceName, setServiceName] = useState(''); // Service name
 
   useEffect(() => {
-    // Hàm lấy dữ liệu từ Firestore
+    // Function to fetch data from Firestore
     const fetchServices = async () => {
       try {
-        const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'Service')); // Thay 'Service' bằng tên collection trong Firestore
+        const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'Service'));
         const serviceList: Service[] = querySnapshot.docs.map(doc => ({
-          id: doc.id, // ID tài liệu
-          ...doc.data() as Omit<Service, 'id'>, // Lấy dữ liệu của dịch vụ từ Firestore
+          id: doc.id,
+          ...doc.data() as Omit<Service, 'id'>,
         }));
-        setServices(serviceList); // Cập nhật state với dữ liệu dịch vụ
-        setLoading(false); // Tắt trạng thái loading sau khi tải dữ liệu
+        setServices(serviceList);
+        setLoading(false);
       } catch (error) {
-        console.error('Lỗi khi lấy danh sách dịch vụ:', error);
-        setLoading(false); // Tắt loading nếu có lỗi
+        console.error('Error fetching service list:', error);
+        setLoading(false);
       }
     };
 
-    fetchServices(); // Gọi hàm khi component render
+    fetchServices();
   }, []);
 
-  // Hàm render mỗi item trong danh sách dịch vụ
+  // Function to render each item in the service list
   const renderItem = ({ item }: { item: Service }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => navigation.navigate('DetailScreen', { service: item })} // Chuyển hướng đến trang chi tiết
-      activeOpacity={0.7} // Thêm hiệu ứng chuyển động khi nhấn
+      onPress={() => navigation.navigate('DetailScreen', { service: item })}
+      activeOpacity={0.7}
     >
       <Text style={styles.itemName}>{item.ServiceName}</Text>
       <Text style={styles.itemPrice}>{item.Price} ₫</Text>
     </TouchableOpacity>
   );
 
-  // Hiển thị loading khi đang tải dữ liệu
+  // Function to add a service
+  const handleAddService = async () => {
+    if (!creator || !price || !serviceName) {
+      alert('Please fill in all the information');
+      return;
+    }
+
+    const priceValue = parseInt(price);
+    if (isNaN(priceValue) || priceValue <= 0) {
+      alert('Service price must be a positive number');
+      return;
+    }
+
+    const newService = {
+      Creator: creator,
+      Price: priceValue,
+      ServiceName: serviceName,
+    };
+
+    try {
+      // Add service to Firestore
+      await addDoc(collection(FIRESTORE_DB, 'Service'), newService);
+      // Update the service list
+      setServices(prevServices => [...prevServices, { ...newService, id: 'new-id' }]); // Temporary ID
+      // Reset all fields
+      setCreator('');
+      setPrice('');
+      setServiceName('');
+      setModalVisible(false); // Close modal after adding service
+    } catch (error) {
+      console.error('Error adding service:', error);
+    }
+  };
+
+  // Show loading indicator while data is loading
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" style={{ flex: 1, justifyContent: 'center' }} />;
   }
@@ -59,20 +95,19 @@ const AdminListScreen = ({ navigation }: any) => {
       <View style={styles.header}>
         <Text style={styles.headerText}>ADMIN</Text>
         <Text style={styles.logo}>KAMI SPA</Text>
-        
       </View>
       <View style={styles.content}>
         <View style={styles.serviceListHeader}>
-          <Text style={styles.serviceListHeaderText}>Danh sách dịch vụ</Text>
-          <TouchableOpacity style={styles.addButton}>
+          <Text style={styles.serviceListHeaderText}>Service List</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
             <Text style={styles.addButtonText}>+</Text>
           </TouchableOpacity>
           <View style={{ height: 10 }} />
         </View>
         <FlatList
-          data={services} // Dữ liệu dịch vụ
-          renderItem={renderItem} // Hàm render cho mỗi item
-          keyExtractor={(item) => item.id} // Sử dụng ID làm khóa duy nhất
+          data={services}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
         />
       </View>
       <View style={styles.bottomNav}>
@@ -81,15 +116,50 @@ const AdminListScreen = ({ navigation }: any) => {
         <Text style={styles.navItem}>Customer</Text>
         <Text style={styles.navItem}>Setting</Text>
       </View>
+
+      {/* Modal to add new service */}
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)} // Close modal on back button
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Service</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Creator's Name"
+              value={creator}
+              onChangeText={setCreator}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Service Price"
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Service Name"
+              value={serviceName}
+              onChangeText={setServiceName}
+            />
+            <Button title="Add Service" onPress={handleAddService} />
+            <Button title="Close" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
-// Định nghĩa kiểu dáng giao diện
+// Define styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7', // Thêm màu nền cho container
+    backgroundColor: '#F7F7F7',
   },
   header: {
     backgroundColor: '#F8C0C8',
@@ -107,16 +177,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#E60026',
   },
-  logoImage: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginLeft: 10,
-  },
   content: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#FFFFFF', // Thêm màu nền cho content
+    backgroundColor: '#FFFFFF',
   },
   serviceListHeader: {
     flexDirection: 'row',
@@ -166,6 +230,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
   },
 });
 
