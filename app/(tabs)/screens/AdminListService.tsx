@@ -110,12 +110,17 @@ const AdminListScreen = ({ navigation }: any) => {
           keyExtractor={(item) => item.id}
         />
       </View>
-      <View style={styles.bottomNav}>
+      
+        <View style={styles.bottomNav}>
         <Text style={styles.navItem}>Home</Text>
-        <Text style={styles.navItem}>Transaction</Text>
+        
         <Text style={styles.navItem}>Customer</Text>
-        <Text style={styles.navItem}>Setting</Text>
-      </View>
+        <TouchableOpacity onPress={() => navigation.navigate('SettingsScreen')}>
+            <Text style={styles.navItem}>Setting</Text>
+        </TouchableOpacity>
+        </View>
+       
+
 
       {/* Modal to add new service */}
       <Modal
@@ -146,8 +151,12 @@ const AdminListScreen = ({ navigation }: any) => {
               value={serviceName}
               onChangeText={setServiceName}
             />
-            <Button title="Add Service" onPress={handleAddService} />
-            <Button title="Close" onPress={() => setModalVisible(false)} />
+            <TouchableOpacity style={styles.submitButton} onPress={handleAddService}>
+              <Text style={styles.submitButtonText}>Add Service</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -242,11 +251,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
+    elevation: 5, // For Android shadow
+    shadowColor: '#000', // For iOS shadow
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#333333',
   },
   input: {
     borderWidth: 1,
@@ -254,6 +272,29 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
+  },
+  submitButton: {
+    backgroundColor: '#E60026',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  closeButton: {
+    backgroundColor: '#E5E5E5',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#333333',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

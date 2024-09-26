@@ -5,7 +5,7 @@ import LoginScreen from './screens/Login';
 import AdminListScreen from './screens/AdminListService';
 import CustomerListScreen from './screens/CustomerListService';
 import DetailScreen from './screens/DetailScreen';  // Import DetailScreen
-
+import SettingsScreen from './screens/SettingsScreen';
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -16,6 +16,7 @@ const App = () => {
         <Stack.Screen name="AdminListService" component={AdminListScreen} options={{ headerShown: false }} />
         <Stack.Screen name="CustomerListService" component={CustomerListScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DetailScreen" component={DetailScreen} options={{ title: 'Service Details' }} />
+        <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
