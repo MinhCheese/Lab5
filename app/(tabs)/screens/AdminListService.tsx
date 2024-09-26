@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, TextInput, Button } from 'react-native';
-import { FIRESTORE_DB } from '../firebaseConfig'; // Firebase configuration
-import { collection, getDocs, addDoc } from 'firebase/firestore'; // Firebase Firestore SDK
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, TextInput } from 'react-native';
+import { FIRESTORE_DB } from '../firebaseConfig'; 
+import { collection, getDocs, addDoc } from 'firebase/firestore';
 
-// Define the Service data type
 type Service = {
   id: string;
   Creator: string;
@@ -12,15 +11,14 @@ type Service = {
 };
 
 const AdminListScreen = ({ navigation }: any) => {
-  const [services, setServices] = useState<Service[]>([]); // Services data
-  const [loading, setLoading] = useState(true); // Data loading state
-  const [isModalVisible, setModalVisible] = useState(false); // Modal visibility state
-  const [creator, setCreator] = useState(''); // Creator's name
-  const [price, setPrice] = useState(''); // Service price
-  const [serviceName, setServiceName] = useState(''); // Service name
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [creator, setCreator] = useState('');
+  const [price, setPrice] = useState('');
+  const [serviceName, setServiceName] = useState('');
 
   useEffect(() => {
-    // Function to fetch data from Firestore
     const fetchServices = async () => {
       try {
         const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'Service'));
@@ -36,22 +34,25 @@ const AdminListScreen = ({ navigation }: any) => {
       }
     };
 
-    fetchServices();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', fetchServices); // Gọi lại hàm fetchServices mỗi khi màn hình được lấy nét
 
-  // Function to render each item in the service list
+    fetchServices(); // Gọi hàm để tải dịch vụ ngay khi màn hình được hiển thị
+
+    return unsubscribe; // Trả về hàm unsubscribe
+  }, [navigation]);
+
   const renderItem = ({ item }: { item: Service }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => navigation.navigate('DetailScreen', { service: item })}
+      onPress={() => navigation.navigate('AdminDetailScreen', { service: item })}
       activeOpacity={0.7}
     >
       <Text style={styles.itemName}>{item.ServiceName}</Text>
       <Text style={styles.itemPrice}>{item.Price} ₫</Text>
+      <Text style={styles.itemCreator}>{item.Creator}</Text> 
     </TouchableOpacity>
   );
 
-  // Function to add a service
   const handleAddService = async () => {
     if (!creator || !price || !serviceName) {
       alert('Please fill in all the information');
@@ -71,21 +72,17 @@ const AdminListScreen = ({ navigation }: any) => {
     };
 
     try {
-      // Add service to Firestore
       await addDoc(collection(FIRESTORE_DB, 'Service'), newService);
-      // Update the service list
-      setServices(prevServices => [...prevServices, { ...newService, id: 'new-id' }]); // Temporary ID
-      // Reset all fields
+      setServices(prevServices => [...prevServices, { ...newService, id: 'new-id' }]);
       setCreator('');
       setPrice('');
       setServiceName('');
-      setModalVisible(false); // Close modal after adding service
+      setModalVisible(false);
     } catch (error) {
       console.error('Error adding service:', error);
     }
   };
 
-  // Show loading indicator while data is loading
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" style={{ flex: 1, justifyContent: 'center' }} />;
   }
@@ -111,23 +108,19 @@ const AdminListScreen = ({ navigation }: any) => {
         />
       </View>
       
-        <View style={styles.bottomNav}>
-        <Text style={styles.navItem}>Home</Text>
-        
+      <View style={styles.bottomNav}>
+        <Text style={styles.navItem}>Home</Text>       
         <Text style={styles.navItem}>Customer</Text>
         <TouchableOpacity onPress={() => navigation.navigate('SettingsScreen')}>
-            <Text style={styles.navItem}>Setting</Text>
+          <Text style={styles.navItem}>Setting</Text>
         </TouchableOpacity>
-        </View>
-       
-
-
-      {/* Modal to add new service */}
+      </View>
+      
       <Modal
         transparent={true}
         visible={isModalVisible}
         animationType="slide"
-        onRequestClose={() => setModalVisible(false)} // Close modal on back button
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -164,7 +157,6 @@ const AdminListScreen = ({ navigation }: any) => {
   );
 };
 
-// Define styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -228,6 +220,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
   },
+  itemCreator: {
+    fontSize: 14, // Increased the font size from 12 to 14
+    color: '#999999',
+  },
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -251,8 +247,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
-    elevation: 5, // For Android shadow
-    shadowColor: '#000', // For iOS shadow
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -294,7 +290,6 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#333333',
     fontWeight: 'bold',
-    fontSize: 16,
   },
 });
 
