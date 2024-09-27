@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, Alert } from 'react-native';
 import { FIRESTORE_DB } from '../firebaseConfig';
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 
@@ -7,7 +7,7 @@ const AdminDetailScreen = ({ route, navigation }: any) => {
   const { service } = route.params;
   const [serviceName, setServiceName] = useState(service.ServiceName);
   const [price, setPrice] = useState(service.Price);
-  const [creator, setCreator] = useState(service.Creator); // Thêm thuộc tính Creator
+  const [creator, setCreator] = useState(service.Creator);
   const [isModalVisible, setModalVisible] = useState(false);
 
   const handleUpdate = async () => {
@@ -21,62 +21,50 @@ const AdminDetailScreen = ({ route, navigation }: any) => {
       await updateDoc(serviceRef, {
         ServiceName: serviceName,
         Price: price,
-        Creator: creator, // Cập nhật Creator
+        Creator: creator,
       });
       Alert.alert('Success', 'Service updated successfully.');
-      navigation.navigate('AdminListService', { refresh: true }); // Chuyển về AdminListScreen và yêu cầu làm mới
+      navigation.navigate('AdminListService', { refresh: true });
     } catch (error: any) {
       Alert.alert('Error', 'Failed to update service: ' + error.message);
     }
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      "Confirm",
-      "Are you sure you want to delete this service?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Delete",
-          onPress: async () => {
-            try {
-              await deleteDoc(doc(FIRESTORE_DB, 'Service', service.id));
-              Alert.alert("Success", "Service has been deleted.");
-              navigation.navigate('AdminListService', { refresh: true }); // Chuyển về AdminListScreen và yêu cầu làm mới
-            } catch (error: any) {
-              Alert.alert("Error", "An error occurred while deleting the service: " + error.message);
-            }
-          }
-        }
-      ]
-    );
+    try {
+      await deleteDoc(doc(FIRESTORE_DB, 'Service', service.id));
+      Alert.alert("Success", "Service has been deleted.");
+      navigation.navigate('AdminListService', { refresh: true });
+    } catch (error: any) {
+      Alert.alert("Error", "An error occurred while deleting the service: " + error.message);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Service Details</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Service Name"
-        value={serviceName}
-        onChangeText={setServiceName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Price"
-        value={String(price)}
-        onChangeText={(text) => setPrice(Number(text))}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Creator's Name"
-        value={creator} // Hiển thị Creator
-        onChangeText={setCreator}
-      />
+      <View style={styles.infoContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Service Name"
+          value={serviceName}
+          onChangeText={setServiceName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Price"
+          value={String(price)}
+          onChangeText={(text) => setPrice(Number(text))}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Creator's Name"
+          value={creator}
+          onChangeText={setCreator}
+        />
+      </View>
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
           <Text style={styles.buttonText}>Update Service</Text>
@@ -108,7 +96,7 @@ const AdminDetailScreen = ({ route, navigation }: any) => {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -119,10 +107,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F7F7',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#E60026',
     textAlign: 'center',
+  },
+  infoContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   input: {
     borderWidth: 1,

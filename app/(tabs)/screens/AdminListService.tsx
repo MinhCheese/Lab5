@@ -72,8 +72,13 @@ const AdminListScreen = ({ navigation }: any) => {
     };
 
     try {
-      await addDoc(collection(FIRESTORE_DB, 'Service'), newService);
-      setServices(prevServices => [...prevServices, { ...newService, id: 'new-id' }]);
+      // Thêm tài liệu vào Firestore và lấy id của tài liệu đó
+      const docRef = await addDoc(collection(FIRESTORE_DB, 'Service'), newService);
+      
+      // Cập nhật danh sách dịch vụ với id của tài liệu mới
+      setServices(prevServices => [...prevServices, { ...newService, id: docRef.id }]);
+      
+      // Reset các trường input và đóng modal
       setCreator('');
       setPrice('');
       setServiceName('');
@@ -95,7 +100,7 @@ const AdminListScreen = ({ navigation }: any) => {
       </View>
       <View style={styles.content}>
         <View style={styles.serviceListHeader}>
-          <Text style={styles.serviceListHeaderText}>Service List</Text>
+          <Text style={styles.serviceListHeaderText}>Danh sách dịch vụ</Text>
           <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
             <Text style={styles.addButtonText}>+</Text>
           </TouchableOpacity>
@@ -104,13 +109,15 @@ const AdminListScreen = ({ navigation }: any) => {
         <FlatList
           data={services}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id} // Đảm bảo id là duy nhất
         />
       </View>
       
       <View style={styles.bottomNav}>
         <Text style={styles.navItem}>Home</Text>       
-        <Text style={styles.navItem}>Customer</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Customer')}>
+          <Text style={styles.navItem}>Customer</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('SettingsScreen')}>
           <Text style={styles.navItem}>Setting</Text>
         </TouchableOpacity>
@@ -221,7 +228,7 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
   itemCreator: {
-    fontSize: 14, // Increased the font size from 12 to 14
+    fontSize: 14,
     color: '#999999',
   },
   bottomNav: {
