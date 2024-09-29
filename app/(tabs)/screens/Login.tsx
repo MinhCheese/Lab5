@@ -97,6 +97,14 @@ const LoginScreen = ({ navigation }: any) => {
       >
         <Text style={styles.registerText}>Đăng ký tài khoản mới</Text>
       </TouchableOpacity>
+
+      {/* Nút để chuyển hướng đến trang quên mật khẩu */}
+      <TouchableOpacity 
+        style={styles.forgotPasswordButton} 
+        onPress={() => navigation.navigate('ChangePassword')}
+      >
+        <Text style={styles.forgotPasswordText}>Đổi mật khẩu</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -146,6 +154,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   registerText: {
+    color: '#F08080',
+    fontSize: 16,
+  },
+  forgotPasswordButton: {
+    marginTop: 20,
+  },
+  forgotPasswordText: {
     color: '#F08080',
     fontSize: 16,
   },
