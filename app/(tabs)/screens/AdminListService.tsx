@@ -17,6 +17,7 @@ const AdminListScreen = ({ navigation }: any) => {
   const [creator, setCreator] = useState('');
   const [price, setPrice] = useState('');
   const [serviceName, setServiceName] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Thêm trạng thái cho thanh tìm kiếm
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -34,12 +35,16 @@ const AdminListScreen = ({ navigation }: any) => {
       }
     };
 
-    const unsubscribe = navigation.addListener('focus', fetchServices); // Gọi lại hàm fetchServices mỗi khi màn hình được lấy nét
+    const unsubscribe = navigation.addListener('focus', fetchServices); 
 
-    fetchServices(); // Gọi hàm để tải dịch vụ ngay khi màn hình được hiển thị
+    fetchServices();
 
-    return unsubscribe; // Trả về hàm unsubscribe
+    return unsubscribe;
   }, [navigation]);
+
+  const filteredServices = services.filter((service) =>
+    service.ServiceName.toLowerCase().includes(searchQuery.toLowerCase()) // Lọc danh sách dựa trên nội dung tìm kiếm
+  );
 
   const renderItem = ({ item }: { item: Service }) => (
     <TouchableOpacity
@@ -72,13 +77,8 @@ const AdminListScreen = ({ navigation }: any) => {
     };
 
     try {
-      // Thêm tài liệu vào Firestore và lấy id của tài liệu đó
       const docRef = await addDoc(collection(FIRESTORE_DB, 'Service'), newService);
-      
-      // Cập nhật danh sách dịch vụ với id của tài liệu mới
       setServices(prevServices => [...prevServices, { ...newService, id: docRef.id }]);
-      
-      // Reset các trường input và đóng modal
       setCreator('');
       setPrice('');
       setServiceName('');
@@ -104,15 +104,23 @@ const AdminListScreen = ({ navigation }: any) => {
           <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
             <Text style={styles.addButtonText}>+</Text>
           </TouchableOpacity>
-          <View style={{ height: 10 }} />
         </View>
+
+        {/* Thanh tìm kiếm */}
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Tìm kiếm dịch vụ..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
         <FlatList
-          data={services}
+          data={filteredServices} // Dữ liệu đã được lọc
           renderItem={renderItem}
-          keyExtractor={(item) => item.id} // Đảm bảo id là duy nhất
+          keyExtractor={(item) => item.id}
         />
       </View>
-      
+
       <View style={styles.bottomNav}>
         <Text style={styles.navItem}>Home</Text>       
         <TouchableOpacity onPress={() => navigation.navigate('Customer')}>
@@ -122,7 +130,7 @@ const AdminListScreen = ({ navigation }: any) => {
           <Text style={styles.navItem}>Setting</Text>
         </TouchableOpacity>
       </View>
-      
+
       <Modal
         transparent={true}
         visible={isModalVisible}
@@ -298,6 +306,16 @@ const styles = StyleSheet.create({
     color: '#333333',
     fontWeight: 'bold',
   },
+  searchInput: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    marginHorizontal: 10,
+    backgroundColor: '#fff',
+  },
+  
 });
 
 export default AdminListScreen;

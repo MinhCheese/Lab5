@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { FIRESTORE_DB } from '../firebaseConfig'; // Firebase configuration
 import { collection, getDocs } from 'firebase/firestore'; // Firebase Firestore SDK
 
@@ -13,7 +13,9 @@ type Service = {
 
 const CustomerListService = ({ navigation }: any) => {
   const [services, setServices] = useState<Service[]>([]); // Services data
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]); // Filtered services for search
   const [loading, setLoading] = useState(true); // Data loading state
+  const [searchText, setSearchText] = useState(''); // Search input state
 
   useEffect(() => {
     // Function to fetch data from Firestore
@@ -25,6 +27,7 @@ const CustomerListService = ({ navigation }: any) => {
           ...doc.data() as Omit<Service, 'id'>,
         }));
         setServices(serviceList);
+        setFilteredServices(serviceList); // Initially, show all services
         setLoading(false);
       } catch (error) {
         console.error('Error fetching service list:', error);
@@ -34,6 +37,19 @@ const CustomerListService = ({ navigation }: any) => {
 
     fetchServices();
   }, []);
+
+  // Function to filter services based on search text
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    if (text) {
+      const filteredData = services.filter(service =>
+        service.ServiceName.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredServices(filteredData);
+    } else {
+      setFilteredServices(services);
+    }
+  };
 
   // Function to render each item in the service list
   const renderItem = ({ item }: { item: Service }) => (
@@ -59,9 +75,15 @@ const CustomerListService = ({ navigation }: any) => {
         <Text style={styles.logo}>KAMI SPA</Text>
       </View>
       <View style={styles.content}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search services..."
+          value={searchText}
+          onChangeText={handleSearch}
+        />
         <Text style={styles.serviceListHeaderText}>Service List</Text>
         <FlatList
-          data={services}
+          data={filteredServices}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
         />
@@ -102,6 +124,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     backgroundColor: '#FFFFFF',
+  },
+  searchInput: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    marginHorizontal: 10,
+    backgroundColor: '#fff',
   },
   serviceListHeaderText: {
     fontSize: 18,
