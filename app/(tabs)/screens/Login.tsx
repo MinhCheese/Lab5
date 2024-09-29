@@ -89,6 +89,14 @@ const LoginScreen = ({ navigation }: any) => {
       >
         <Text style={styles.loginText}>{loading ? 'Loading...' : 'Login'}</Text>
       </TouchableOpacity>
+
+      {/* Nút để chuyển hướng đến trang đăng ký */}
+      <TouchableOpacity 
+        style={styles.registerButton} 
+        onPress={() => navigation.navigate('Register')}
+      >
+        <Text style={styles.registerText}>Đăng ký tài khoản mới</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -133,6 +141,13 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginTop: 20,
+  },
+  registerButton: {
+    marginTop: 20,
+  },
+  registerText: {
+    color: '#F08080',
+    fontSize: 16,
   },
 });
 
